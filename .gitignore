@@ -216,3 +216,13 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Superpowers subagent-driven-development scratch workspace
+.superpowers/
+
+# Saída de simulações do Batsim (gerada em tempo de execução)
+data/output/*
+!data/output/.gitkeep
+
+# Core dumps (podem aparecer se o Batsim falhar com entrada inválida)
+data/core.*

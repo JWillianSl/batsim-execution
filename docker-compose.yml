@@ -1,0 +1,22 @@
+services:
+  batsim:
+    image: "${BATSIM_IMAGE:-oarteam/batsim}:${BATSIM_IMAGE_TAG:-4.2.0}"
+    network_mode: "${BATSIM_NETWORK_MODE:-host}"
+    user: "${BATSIM_UID:-1000}:${BATSIM_GID:-1000}"
+    volumes:
+      - ./data:/data
+    depends_on:
+      - batsched
+    command: >
+      -p /data/${BATSIM_PLATFORM_FILE:-platforms/small_platform.xml}
+      -w /data/${BATSIM_WORKLOAD_FILE:-workloads/test_one_computation_job.json}
+      -e /data/${BATSIM_OUTPUT_DIR:-output}/out_
+
+  batsched:
+    build:
+      context: ./docker/batsched
+      args:
+        BATSCHED_NUR_KAPACK_REV: "${BATSCHED_NUR_KAPACK_REV:-774b7f56c3efc93adb73ee82a62faf5dc2fce112}"
+        BATSCHED_SRC_REV: "${BATSCHED_SRC_REV:-17072778995100fc90214ea4910bf5b171adfd0d}"
+    network_mode: "${BATSIM_NETWORK_MODE:-host}"
+    command: ["-v", "${BATSCHED_ALGORITHM:-easy_bf}"]
