@@ -1,0 +1,74 @@
+image: oarteam/batsim_ci
+
+variables:
+  GIT_SUBMODULE_STRATEGY: none
+
+stages:
+  - build
+  - update_dependencies_cache
+  - test
+  - coverage
+  - deploy
+
+###############################################################################
+# Build stage
+###############################################################################
+build:
+  stage: build
+  script:
+    - ./ci/build.bash
+  artifacts:
+    paths:
+      - /builds/batsim/intervalset/build
+
+###############################################################################
+# Dependencies cache stage
+###############################################################################
+update_dependencies_cache:
+  stage: update_dependencies_cache
+  script:
+    - ./ci/update-dependencies-cache.bash
+
+###############################################################################
+# Test stage
+###############################################################################
+test:
+  stage: test
+  script:
+    - ./ci/run-tests.bash
+  dependencies:
+    - build
+  artifacts:
+    paths:
+      - /builds/batsim/intervalset/build
+
+###############################################################################
+# Coverage stage
+###############################################################################
+coverage:
+  stage: coverage
+  script:
+    - ./ci/analyze-coverage.bash
+  dependencies:
+    - test
+  artifacts:
+    paths:
+      - /builds/batsim/intervalset/cover
+
+###############################################################################
+# Deploy stage
+###############################################################################
+deploy_coverage:
+  stage: deploy
+  script:
+      # SSH setup (do NOT run these commands on your machine)
+      - eval $(ssh-agent -s)
+      - ssh-add <(echo "$SSH_PRIVATE_KEY")
+      - mkdir -p ~/.ssh
+      - '[[ -f /.dockerenv ]] && echo -e "Host *\n\tStrictHostKeyChecking no\n\n" >> ~/.ssh/config'
+      # Finally push the coverage report on the gforge website
+      - rsync -rlgoDz --delete cover/html/ mpoquet@scm.gforge.inria.fr:/home/groups/batsim/htdocs/intervalset/coverage
+  dependencies:
+    - coverage
+  only:
+    - master
